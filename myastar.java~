@@ -1,0 +1,77 @@
+import java.util.Optional;
+public class myastar extends astar_base
+{
+    public myastar(int r, int c)
+    { super(r,c); }
+
+    @Override
+    public void customize() {
+       ////// Things you can do here...
+	//setRandFactor(0.13); // increase amount of water/fire
+	//setcosts(2,0,1,10); // cost of land, desert, fire, water
+	pathfinder.gap = 15; // change size of graphical hexgagons
+        //pathfinder.yoff = 20; // graphical top margin adjustment
+        pathfinder.delaytime = 300; //change animation speed
+    }
+    public static void main(String[] av) {
+	pathfinder.main(av);
+    }//main
+
+    
+    // must @Override function:
+    @Override
+    public Optional<coord> search(int sy, int sx, int ty, int tx) {
+	
+	System.out.println("goal: y: "+ ty + " x: " + tx);
+	//interior is PATH[][].interior
+	
+	//   W NW NE E SE SW
+	// { 0,-1,-1,0, 1, 1};  //Y
+	//{{-1,-1, 0,1, 0,-1},  //X EVEN
+	// {-1, 0, 1,1, 1, 0}}; //X ODD
+        int[] DY = Hexagon.DY;
+	int[][] DX = Hexagon.DX;
+	
+	// add with frontier.add((coord)current)
+	coord start = new coord(sy, sx);
+	var frontier = new PriorityHeap<coord>(128,false);
+	coord current;
+	frontier.add(start);
+	
+	while (frontier.size() > 0) { //while frontier has items
+	    current = frontier.poll().get(); //polling deletes it
+	    current.interior = true; //move current to interior
+	    if (current.x == tx && current.y == ty) {
+		System.out.println("You are here: y: " + current.y + " x: " + current.x);
+		return Optional.of(current);
+	    }//stop loop if current coords = goal coords
+	    
+	    //System.out.println(frontier.size());
+	    
+	    for (int i = 0; i <= 5; i++) {
+		int ny = current.y+DY[i];
+		int nx = current.x+DX[current.y%2][i];
+		coord neighbor = makeneighbor(current, ny, nx, ty, tx);
+		
+		if (neighbor!=null) {//do nothing for OOB
+		    
+		    if (PATH[ny][nx]==null) { //not on frontier yet
+			PATH[ny][nx] = neighbor;
+			frontier.add(PATH[ny][nx]);
+		    }//if null
+		    
+		    else if (PATH[ny][nx].interior==true) {}//do nothing
+		    
+		    else { //on frontier
+			if (neighbor.compareTo(PATH[ny][nx]) < 0) { 
+			    PATH[ny][nx].copy_from(neighbor);
+			    frontier.reposition(PATH[ny][nx]);
+			}//if neighbor
+		    }//else
+		}//IF NOT NULL
+	    }//for
+	}//while
+	System.out.println("The loop has ended, and so it should return optional.empty() because we didn't find a solution.");
+	return Optional.empty();
+    }//search
+}//myastar class
